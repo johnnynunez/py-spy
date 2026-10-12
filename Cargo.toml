@@ -60,4 +60,4 @@ termios = "0.3.3"
 winapi = { version = "0.3", features = ["errhandlingapi", "winbase", "consoleapi", "wincon", "handleapi", "timeapi", "processenv"] }
 
 [patch.crates-io]
-remoteprocess = { git = "https://github.com/johnnynunez/remoteprocess", rev = "f801bdf4b0470ba3ca760da228e143a25bc4d809" }
+remoteprocess = { git = "https://github.com/johnnynunez/remoteprocess", rev = "1af3654eb7da71f1ad4360fedba06512750a61db" }

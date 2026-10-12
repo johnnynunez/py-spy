@@ -5,7 +5,7 @@ name: verify remoteprocess winarm64 unwind
 
 on:
   push:
-    branches: [verify-remoteprocess-winarm64]
+    branches: [verify-remoteprocess-winarm64-control]
   workflow_dispatch:
 
 permissions:
@@ -44,5 +44,5 @@ jobs:
           maturin build --release -o dist --all-features
       - uses: actions/upload-artifact@v4
         with:
-          name: wheels-windows-11-arm-patched
+          name: wheels-windows-11-arm-control
           path: dist
