@@ -42,6 +42,47 @@ jobs:
         run: |
           pip install --upgrade maturin
           maturin build --release -o dist --all-features
+      - name: Native unwinding check (py-spy dump --native)
+        shell: bash
+        run: |
+          pip install dist/*.whl
+          cat > native_check.py <<'EOF'
+          import json, os, re, shutil, subprocess, sys, time
+          target = r"""
+          import time
+          def key_cb_marker(v):
+              x = 0
+              for i in range(20000):
+                  x += i
+              return -v
+          def outer_marker():
+              end = time.time() + 60
+              while time.time() < end:
+                  sorted(range(2000), key=key_cb_marker)
+          outer_marker()
+          """
+          open("target_native.py", "w").write(target)
+          # Launch the real interpreter (not a venv redirector) so the PID is the Python process.
+          p = subprocess.Popen([sys.executable, "target_native.py"])
+          time.sleep(3)
+          spy = shutil.which("py-spy")
+          counts = []
+          try:
+              for i in range(5):
+                  out = subprocess.run([spy, "dump", "--native", "--pid", str(p.pid)],
+                                       capture_output=True, text=True, timeout=60)
+                  print(out.stdout, out.stderr)
+                  frames = [l for l in out.stdout.splitlines() if l.startswith("    ")]
+                  native = [l for l in frames if re.search(r"\(\S+\.(dll|exe)\)\s*$", l)]
+                  counts.append(len(native))
+          finally:
+              p.kill()
+          res = {"native_frames_per_dump": counts, "python": sys.version}
+          print(json.dumps(res))
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+              f.write("native frames per `py-spy dump --native`: %s\n" % counts)
+          EOF
+          python native_check.py
       - uses: actions/upload-artifact@v4
         with:
           name: wheels-windows-11-arm-patched
