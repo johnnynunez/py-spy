@@ -1,0 +1,48 @@
+# Verification-only workflow (fork branch). Builds py-spy master with a patched
+# remoteprocess (Windows ARM64 unwinding fix) on windows-11-arm and runs the
+# project's own tests, including the `unwind`-gated native test.
+name: verify remoteprocess winarm64 unwind
+
+on:
+  push:
+    branches: [verify-remoteprocess-winarm64]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: windows-11-arm
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          architecture: arm64
+      - name: Show resolved remoteprocess
+        shell: bash
+        run: |
+          cargo update -p remoteprocess
+          grep -n -A3 'name = "remoteprocess"' Cargo.lock
+      - name: Build
+        run: cargo build --release --verbose --examples
+      - name: Install optional numpy dependency
+        run: pip install "numpy>=2"
+      - name: Test (default features)
+        run: cargo test --release
+      - name: Test (with native unwinding)
+        run: cargo test --release --features unwind
+      - name: Build Wheel
+        shell: bash
+        run: |
+          pip install --upgrade maturin
+          maturin build --release -o dist --all-features
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-windows-11-arm-patched
+          path: dist

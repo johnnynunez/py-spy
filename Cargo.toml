@@ -58,3 +58,6 @@ termios = "0.3.3"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["errhandlingapi", "winbase", "consoleapi", "wincon", "handleapi", "timeapi", "processenv"] }
+
+[patch.crates-io]
+remoteprocess = { git = "https://github.com/johnnynunez/remoteprocess", rev = "f801bdf4b0470ba3ca760da228e143a25bc4d809" }
